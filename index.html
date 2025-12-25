@@ -2,99 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sprite Animation Demo</title>
+    <title>Cat Sprite Animation</title>
     <style>
-        body { background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { background: #444; border: 2px solid #fff; }
-        .info { position: absolute; top: 20px; left: 20px; color: #fff; font-family: monospace; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; }
+        body { background: #222; color: #fff; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        canvas { background: #444; border: 2px solid #fff; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="info">
-        <b>Press keys to change animation:</b><br>
-        1: Idle<br>
-        2: Dialogue<br>
-        3: Walk<br>
-        4: Attack<br>
-        5: Protect
-    </div>
-    <canvas id="gameCanvas" width="256" height="256"></canvas>
+    <h2>Cat Sprite Animation (Frames 1-8 from 6th Row)</h2>
+    <canvas id="catAnim" width="32" height="32"></canvas>
     <script>
-        // Update this path if you move the image or rename it
-        const SPRITE_SRC = 'spritesheet.png';
+    // CONFIGURE THESE BASED ON YOUR SPRITE SHEET
+    const SPRITE_SRC = 'cat.png';
+    const FRAME_WIDTH = 32;
+    const FRAME_HEIGHT = 32;
+    const ROW_INDEX = 5; // 6th row (0-based)
+    const FRAMES_IN_ROW = 8;
+    const FRAME_SPEED = 100; // ms per frame
 
-        const ANIMATIONS = [
-            { name: 'Idle', row: 0, frames: 8 },
-            { name: 'Dialogue', row: 1, frames: 8 },
-            { name: 'Walk', row: 2, frames: 8 },
-            { name: 'Attack', row: 3, frames: 8 },
-            { name: 'Protect', row: 4, frames: 6 }
-        ];
+    const canvas = document.getElementById('catAnim');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = SPRITE_SRC;
 
-        let currentAnim = 2; // Start with Walk
+    // Set scale based on half the viewport height
+    const scale = Math.floor(window.innerHeight / 2 / FRAME_HEIGHT);
+    const SCALED_WIDTH = FRAME_WIDTH * scale;
+    const SCALED_HEIGHT = FRAME_HEIGHT * scale;
+    canvas.width = SCALED_WIDTH;
+    canvas.height = SCALED_HEIGHT;
 
-        const Y_OFFSET = 32; // Move character down by 32 pixels (adjust as needed)
+    // Disable image smoothing for crisp pixel art
+    ctx.imageSmoothingEnabled = false;
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        const sprite = new Image();
-        sprite.src = SPRITE_SRC;
-
-        let frame = 0;
-        let frameTimer = 0;
-        const FRAME_SPEED = 30; // ms per frame (very fast)
-
-        // Automatically calculate frame size based on image size and animation frames
-        sprite.onload = () => {
-            // Calculate frame size from image
-            const totalCols = 8; // Number of columns (frames) in the longest row
-            const totalRows = 5; // Number of animation rows
-            window.FRAME_WIDTH = sprite.width / totalCols;
-            window.FRAME_HEIGHT = sprite.height / totalRows;
-            requestAnimationFrame(gameLoop);
-        };
-
-        const TEXT_LABEL_WIDTH = 96; // Increase to fully skip the text label (adjust if needed)
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#888';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(
-                sprite,
-                TEXT_LABEL_WIDTH + frame * FRAME_WIDTH, ANIMATIONS[currentAnim].row * FRAME_HEIGHT, // Crop out label
-                FRAME_WIDTH, FRAME_HEIGHT,
-                (canvas.width - FRAME_WIDTH) / 2, (canvas.height - FRAME_HEIGHT) / 2 + Y_OFFSET,
-                FRAME_WIDTH, FRAME_HEIGHT
-            );
-        }
-
-        function update(delta) {
-            frameTimer += delta;
-            if (frameTimer > FRAME_SPEED) {
-                frame = (frame + 1) % ANIMATIONS[currentAnim].frames;
-                frameTimer = 0;
-            }
-        }
-
-        let lastTime = performance.now();
-        function gameLoop(now) {
-            const delta = now - lastTime;
+    let frame = 0;
+    let lastTime = performance.now();
+    function animate(now) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(
+            img,
+            frame * FRAME_WIDTH, ROW_INDEX * FRAME_HEIGHT,
+            FRAME_WIDTH, FRAME_HEIGHT,
+            0, 0,
+            SCALED_WIDTH, SCALED_HEIGHT
+        );
+        if (now - lastTime > FRAME_SPEED) {
+            frame = (frame + 1) % FRAMES_IN_ROW;
             lastTime = now;
-            update(delta);
-            draw();
-            requestAnimationFrame(gameLoop);
         }
-
-        // Keyboard controls to switch animation
-        window.addEventListener('keydown', (e) => {
-            if (e.key >= '1' && e.key <= '5') {
-                currentAnim = parseInt(e.key) - 1;
-                frame = 0;
-                frameTimer = 0;
-            }
-        });
+        requestAnimationFrame(animate);
+    }
+    img.onload = () => {
+        requestAnimationFrame(animate);
+    };
     </script>
 </body>
 </html>
