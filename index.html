@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sprite Animation Demo</title>
+    <style>
+        body { background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background: #444; border: 2px solid #fff; }
+        .info { position: absolute; top: 20px; left: 20px; color: #fff; font-family: monospace; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <b>Press keys to change animation:</b><br>
+        1: Idle<br>
+        2: Dialogue<br>
+        3: Walk<br>
+        4: Attack<br>
+        5: Protect
+    </div>
+    <canvas id="gameCanvas" width="256" height="256"></canvas>
+    <script>
+        // Update this path if you move the image or rename it
+        const SPRITE_SRC = 'spritesheet.png';
+
+        const ANIMATIONS = [
+            { name: 'Idle', row: 0, frames: 8 },
+            { name: 'Dialogue', row: 1, frames: 8 },
+            { name: 'Walk', row: 2, frames: 8 },
+            { name: 'Attack', row: 3, frames: 8 },
+            { name: 'Protect', row: 4, frames: 6 }
+        ];
+
+        let currentAnim = 2; // Start with Walk
+
+        const Y_OFFSET = 32; // Move character down by 32 pixels (adjust as needed)
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const sprite = new Image();
+        sprite.src = SPRITE_SRC;
+
+        let frame = 0;
+        let frameTimer = 0;
+        const FRAME_SPEED = 30; // ms per frame (very fast)
+
+        // Automatically calculate frame size based on image size and animation frames
+        sprite.onload = () => {
+            // Calculate frame size from image
+            const totalCols = 8; // Number of columns (frames) in the longest row
+            const totalRows = 5; // Number of animation rows
+            window.FRAME_WIDTH = sprite.width / totalCols;
+            window.FRAME_HEIGHT = sprite.height / totalRows;
+            requestAnimationFrame(gameLoop);
+        };
+
+        const TEXT_LABEL_WIDTH = 96; // Increase to fully skip the text label (adjust if needed)
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#888';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(
+                sprite,
+                TEXT_LABEL_WIDTH + frame * FRAME_WIDTH, ANIMATIONS[currentAnim].row * FRAME_HEIGHT, // Crop out label
+                FRAME_WIDTH, FRAME_HEIGHT,
+                (canvas.width - FRAME_WIDTH) / 2, (canvas.height - FRAME_HEIGHT) / 2 + Y_OFFSET,
+                FRAME_WIDTH, FRAME_HEIGHT
+            );
+        }
+
+        function update(delta) {
+            frameTimer += delta;
+            if (frameTimer > FRAME_SPEED) {
+                frame = (frame + 1) % ANIMATIONS[currentAnim].frames;
+                frameTimer = 0;
+            }
+        }
+
+        let lastTime = performance.now();
+        function gameLoop(now) {
+            const delta = now - lastTime;
+            lastTime = now;
+            update(delta);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keyboard controls to switch animation
+        window.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '5') {
+                currentAnim = parseInt(e.key) - 1;
+                frame = 0;
+                frameTimer = 0;
+            }
+        });
+    </script>
+</body>
+</html>
